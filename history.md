@@ -3,27 +3,27 @@
 개발 현황 기록. 기획은 SERVICE.md, 규칙은 CLAUDE.md 를 본다.
 작업이 끝날 때마다 "현재 상태"와 "작업 기록"을 고친다.
 
-## 현재 상태 (2026-11-11 기준)
-- 단계: 기획 문서와 평가 준비. 에이전트 코드는 아직 없다
-- 제출 폴더 구조는 CLAUDE.md "폴더 구조"를 따른다
+## 현재 상태 (2026-11-13 기준)
+- 단계: 개발 마무리. 2차 자체 평가 20/20 완료, README 완성. 남은 것: (선택) Docker 클린 환경 재현성 검증
+- 제출 폴더 구조는 CLAUDE.md "폴더 구조"를 따른다 (src/ 는 도메인 폴더, 제출 필수 3파일은 진입점)
 
 | 영역 | 파일 | 제출 | 상태 |
 |------|------|------|------|
 | 서비스 스펙 | SERVICE.md | 필수 (§4-3 템플릿) | 초안 완료. 템플릿 대조 필요 |
-| 메인 에이전트 그래프 | src/agent.py | 필수 | 완료. create_agent + InMemorySaver, 시스템 프롬프트에 가드레일 |
-| 도메인 도구 | src/tools.py | 필수 | 완료. 도구 4개 |
-| RAG 파이프라인 | src/retriever.py | 필수 | 완료 (키워드·글자 묶음 검색, 점수 0.3 미만은 버림) |
-| API 서버 | src/server.py | 추가 | 완료. POST /query, GET / (화면 파일 없으면 /docs 안내). uvicorn src.server:app --port 8000 |
-| 웹 화면 | src/web/static/index.html | 추가 | B안 연결 완료 (POST /query, session_id, 사진 선택·촬영, 카메라 실패 시 텍스트 전환). 브라우저 수동 확인 필요 |
+| 메인 에이전트 그래프 | src/agent.py | 필수 | 완료. 진입점 → supervisor/graph.py (Multi-Agent Supervisor + InMemorySaver, AGENT_MODE=single 되돌리기) |
+| 도메인 도구 | src/tools.py | 필수 | 완료. 도구 5개 (닮은 왕 추가), 진입점 → 각 도메인 tools.py |
+| RAG 파이프라인 | src/retriever.py | 필수 | 완료. 진입점 → knowledge/retriever.py (키워드·글자 묶음 검색, 점수 0.3 미만은 버림) |
+| API 서버 | src/server.py | 추가 | 완료. 진입점 → web/app.py (POST /query, POST /share-email). uvicorn src.server:app --port 8000 |
+| 웹 화면 | src/web/static/index.html | 추가 | 완료 (B안, 사진 선택·촬영, 결과 카드, 저장, E-mail 공유, 카메라 실패 시 텍스트 전환) |
 | 해석 문서 (더미) | data/ | 필수 | 4개 작성 완료: face_parts(부위 17), traits(유형 7), fortune(운세), animals(육지·해상·공중 각 5) |
 | 인-아웃 세트 | evaluation/test_queries.csv | 필수 (§4-4 스키마) | 20건, §4-4 스키마로 재작성 완료 |
-| 1차 자체 평가 | evaluation/round1_report.md | 필수 (Day 9) | 시작 전 |
-| 2차 자체 평가 | evaluation/round2_report.md | 필수 (Day 10) | 시작 전 |
+| 1차 자체 평가 | evaluation/round1_report.md | 필수 (Day 9) | 완료. 19/20, RAGAS 0.56 / 0.33 / 0.79 (같은 기준 재계산) |
+| 2차 자체 평가 | evaluation/round2_report.md | 필수 (Day 10) | 완료. 20/20, RAGAS 0.68 / 0.36 / 0.75, 개선폭 표 포함 |
 | 평가 스크립트 | evaluation/run_eval.py | 추가 | 완료. --round 1/2 로 제출 리포트 생성 |
 | 테스트 이미지 | evaluation/images/ | 추가 | 9장 준비 완료. dark_face·two_people 은 받은 사진을 가공, cat·landscape 는 코드로 그린 그림 |
-| 실행 안내 | README.md | 필수 (§4-5 템플릿) | 초안 완료 (사용자가 준 템플릿 기준). 2차 라운드 뒤 통과율·RAGAS 숫자 갱신 필요 |
-| 의존성 | requirements.txt | 필수 | 완료 |
-| 클린 환경·실행 | Dockerfile, run.sh | 선택 | 미정 |
+| 실행 안내 | README.md | 필수 (§4-5 템플릿) | 완료. 2차 통과율·RAGAS·개선폭, 트라이앤에러 회고 반영 |
+| 의존성 | requirements.txt | 필수 | 완료 (실제 import 와 대조 확인) |
+| 클린 환경·실행 | Dockerfile, run.sh | 선택 | 미정 (마무리 3단계에서 결정) |
 | 작업용 문서 | CLAUDE.md, history.md | - | 작성 중 |
 
 ## 정해진 것
@@ -56,11 +56,12 @@
 1. 열린 질문 정리
 2. ~~data/ 에 부위별 관상 해석 더미 문서 작성~~ (완료)
 3. ~~evaluation/images/ 에 테스트 이미지 9장 준비~~ (완료)
-4. src/retriever.py → src/tools.py → src/agent.py → src/server.py 순서로 구현, requirements.txt 작성
+4. ~~src/retriever.py → src/tools.py → src/agent.py → src/server.py 순서로 구현, requirements.txt 작성~~ (완료)
 5. ~~POST /query 를 연 뒤 평가 루프 시작~~ (4바퀴 만에 20/20, 목표 달성)
-6. Day 9: run_eval.py --round 1 로 round1_report.md
-7. 개선 후 Day 10: run_eval.py --round 2 로 round2_report.md
-8. 웹 화면(src/static/index.html) 연결, README.md 작성
+6. ~~Day 9: run_eval.py --round 1 로 round1_report.md~~ (19/20)
+7. ~~개선 후 Day 10: run_eval.py --round 2 로 round2_report.md~~ (20/20)
+8. ~~웹 화면 연결, README.md 작성~~ (완료)
+9. (선택) Dockerfile 로 클린 환경 재현성 검증
 
 ## 작업 기록
 ### 2026-11-11
@@ -204,5 +205,9 @@
 - **2차 자체 평가 (round2_report.md, --round 2)**: LLM-as-Judge **20/20** (positive 8/8, negative 4/4, edge 5/5, guardrail 3/3) → 목표 달성
   - RAGAS (근거 있는 8문항, 안내 문구 제외 기준): 근거 충실도 **0.68**, 답 관련성 **0.36**, 근거 정확도 **0.75**
   - 개선폭 (같은 기준 1차 대비): 통과 +1건(19→20), 근거 충실도 **+0.12**, 답 관련성 +0.04, 근거 정확도 -0.04
-  - 개선 원인: 6번 통과(운세 보고에 특징별 문구), 근거 충실 규칙(꾸밈말 금지)으로 6번 충실도 0.17→0.50. 근거 정확도 하락은 특징별로 나눈 검색이 쓰지 않는 근거까지 가져오기 때문(다음 후보: MIN_SCORE 상향)
+  - 개선 원인: 근거 충실 규칙(꾸밈말 금지, 1차 뒤 개선 1)으로 6번 통과·6번 충실도 0.17→0.50. 근거 정확도 하락은 특징별로 나눈 검색이 쓰지 않는 근거까지 가져오기 때문(다음 후보: MIN_SCORE 상향)
   - run_eval.py: 2차 비교 표에 "개선폭 (2차 − 같은 기준 1차)" 열 추가(_delta). 저장된 round2_report.md 는 다시 돌리지 않고 같은 값으로 표와 해석 문단을 더함
+- **코드 정리 점검 (마무리 2단계)**: ruff(F·E9) 통과, vulture 의 "안 쓰는 코드" 후보는 모두 프레임워크가 부르는 것(라우트·미들웨어 인자·RAGAS 어댑터·진입점 다시 내보내기)이라 지울 코드 없음. 모든 함수·클래스에 한국어 docstring 있음, requirements.txt 와 import 일치, .env·캐시 미추적 확인. 코드 변경 없음
+  - README: RAGAS·통과율을 2차 값과 개선폭으로 바꾸고, 트라이앤에러 회고에 실패 접근 8개(되묻기, 사진 무조건 분석, Sonnet 5 권한, RAGAS 설치·한도, 1차 답 미저장, [사진:] 표기)와 근거 정확도 하락 대응을 더함
+  - 정정: 6번 통과 원인은 1차 뒤 "꾸밈말 금지" 규칙(운세 보고 형식 수정은 1차 이전 작업) → round2_report·README·이 기록 수정
+  - 남은 정리 후보 (사람 결정): evaluation/images 의 test1.jpeg·test1.jpg·test7~9.jpeg 는 문항에서 쓰지 않는 원본 사진
